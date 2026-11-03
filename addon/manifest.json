@@ -1,5 +1,6 @@
 {
     "package": "anki_themes",
     "name": "Themes",
-    "min_point_version": 250900
+    "min_point_version": 250900,
+    "homepage": "https://github.com/costaluu/anki-themes"
 }

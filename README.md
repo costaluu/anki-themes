@@ -18,7 +18,7 @@ Claro ou escuro segue a preferência do próprio Anki (Ferramentas → Preferên
 ## Instalar (Linux)
 
 ```sh
-git clone <este-repo> anki-themes && cd anki-themes
+git clone git@github.com:costaluu/anki-themes.git && cd anki-themes
 ./install.py --dry-run     # mostra o que será feito
 ./install.py               # instala no Flatpak e/ou em ~/.local/share/Anki2
 ```
