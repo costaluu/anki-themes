@@ -66,7 +66,8 @@ class WiringTests(unittest.TestCase):
         web = mock.MagicMock()
         hooks.webview_did_inject_style_into_page.fns[0](web)
         web.eval.assert_called_once()
-        mw.form.menuTools.addMenu.assert_called_once()
+        mw.form.menuTools.addAction.assert_called_once()
+        mw.addonManager.setConfigAction.assert_called_once()
 
     def test_disabled_theme_leaves_everything_alone(self):
         mod, colors, hooks, *_ = self.load({"theme": ""})

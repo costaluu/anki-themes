@@ -67,6 +67,73 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(set(errors), {"bad.json", "z_dup.json"})
 
 
+def full_palette(**over):
+    p = {r: "#123456" for r in engine.REQUIRED_ROLES}
+    p.update(bg="#101010", fg="#eeeeee", accent="#ff8800", accent_dim="#cc6600")
+    p.update(over)
+    return p
+
+
+class PaletteTests(unittest.TestCase):
+    def test_palette_expands_to_every_token_in_role_map(self):
+        t = engine.parse_theme({"id": "p", "name": "P", "palette": {"dark": full_palette()}})
+        self.assertEqual(set(t.tokens["dark"]), set(engine.ROLE_MAP))
+        self.assertEqual(t.tokens["dark"]["canvas"], "#101010")
+        self.assertEqual(t.tokens["dark"]["fg"], "#eeeeee")
+
+    def test_alpha_references(self):
+        t = engine.parse_theme({"id": "p", "name": "P", "palette": {"dark": full_palette()}})
+        self.assertEqual(t.tokens["dark"]["selected-bg"], "rgba(255, 136, 0, 0.25)")
+        self.assertEqual(t.tokens["dark"]["highlight-bg"], "rgba(255, 136, 0, 0.4)")
+
+    def test_optional_roles_fall_back(self):
+        t = engine.parse_theme({"id": "p", "name": "P", "palette": {"dark": full_palette()}})
+        self.assertEqual(t.tokens["dark"]["button-primary-gradient-start"], "#ff8800")  # primary -> accent
+        self.assertEqual(t.tokens["dark"]["button-primary-bg"], "#cc6600")  # primary_dim -> accent_dim
+        t2 = engine.parse_theme({"id": "p", "name": "P",
+                                 "palette": {"dark": full_palette(primary="#0000ff")}})
+        self.assertEqual(t2.tokens["dark"]["button-primary-gradient-start"], "#0000ff")
+
+    def test_explicit_tokens_override_and_can_reference_roles(self):
+        t = engine.parse_theme({"id": "p", "name": "P", "palette": {"dark": full_palette()},
+                                "tokens": {"dark": {"canvas": "#abcdef", "border-focus": "$fg@0.5"}}})
+        self.assertEqual(t.tokens["dark"]["canvas"], "#abcdef")
+        self.assertEqual(t.tokens["dark"]["border-focus"], "rgba(238, 238, 238, 0.5)")
+
+    def test_palette_errors(self):
+        pal = full_palette()
+        del pal["accent"]
+        bad = [
+            {"id": "p", "name": "P", "palette": {"dark": pal}},
+            {"id": "p", "name": "P", "palette": {"dark": full_palette(bg="red")}},
+            {"id": "p", "name": "P", "palette": {"dark": full_palette(bg="rgba(1,2,3,.5)")}},
+            {"id": "p", "name": "P", "palette": {"dusk": full_palette()}},
+            {"id": "p", "name": "P", "palette": {"dark": full_palette()},
+             "tokens": {"dark": {"canvas": "$nope"}}},
+            {"id": "p", "name": "P", "palette": {"dark": full_palette()},
+             "tokens": {"dark": {"canvas": "$fg@2"}}},
+            {"id": "p", "name": "P"},
+        ]
+        for data in bad:
+            with self.assertRaises(engine.ThemeError, msg=str(data)):
+                engine.parse_theme(data)
+
+    def test_all_shipped_themes_cover_the_role_map(self):
+        themes, errors = engine.load_themes()
+        self.assertEqual(errors, {})
+        self.assertGreaterEqual(set(themes), {"flame", "catppuccin", "catppuccin-macchiato",
+                                              "catppuccin-frappe", "gruvbox"})
+        for t in themes.values():
+            self.assertEqual(set(t.tokens), {"light", "dark"}, t.id)
+            self.assertEqual(set(t.tokens["light"]), set(t.tokens["dark"]), t.id)
+
+    def test_catppuccin_mocha_matches_the_official_palette(self):
+        t = engine.load_themes()[0]["catppuccin"]
+        d = t.tokens["dark"]
+        self.assertEqual((d["canvas"], d["fg"], d["state-learn"], d["state-review"]),
+                         ("#1e1e2e", "#cdd6f4", "#f38ba8", "#a6e3a1"))
+
+
 class CssTests(unittest.TestCase):
     def setUp(self):
         self.theme = engine.parse_theme(minimal(extra_css="a{color:red}"))

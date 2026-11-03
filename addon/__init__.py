@@ -12,7 +12,7 @@ except ImportError:  # imported outside Anki (tests, tooling)
     mw = None
 
 if mw is not None:
-    from aqt.qt import QAction, QActionGroup, QMenu
+    from aqt.qt import QAction
     from aqt.utils import tooltip
 
     from . import engine
@@ -106,18 +106,18 @@ if mw is not None:
         name = THEMES[theme_id].name if theme_id in THEMES else "padrão do Anki"
         tooltip(f"Tema: {name}. Janelas já abertas (navegador, editor) mostram o novo tema ao reabrir.")
 
+    def open_picker() -> None:
+        from aqt.theme import theme_manager
+
+        from .picker import ThemePicker
+
+        ThemePicker(mw, THEMES, _config().get("theme", ""), bool(theme_manager.night_mode),
+                    set_theme).exec()
+
     def build_menu() -> None:
-        menu = QMenu("Temas", mw)
-        group = QActionGroup(menu)
-        group.setExclusive(True)
-        active = _config().get("theme", "")
-        entries = [("", "Padrão do Anki")] + [(t.id, t.name) for t in THEMES.values()]
-        for theme_id, label in entries:
-            action = QAction(label, menu, checkable=True)
-            action.setChecked(theme_id == active)
-            action.triggered.connect(lambda _checked=False, tid=theme_id: set_theme(tid))
-            group.addAction(action)
-            menu.addAction(action)
-        mw.form.menuTools.addMenu(menu)
+        action = QAction("Temas…", mw)
+        action.triggered.connect(lambda _checked=False: open_picker())
+        mw.form.menuTools.addAction(action)
+        mw.addonManager.setConfigAction(ADDON, open_picker)
 
     build_menu()

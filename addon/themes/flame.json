@@ -68,7 +68,7 @@
       "button-hover-border": "#fd8d3c",
       "button-disabled": "rgba(70, 48, 40, 0.5)",
       "button-primary-bg": "#e31a1c",
-      "button-primary-gradient-start": "#fc6d33",
+      "button-primary-gradient-start": "#f45f2b",
       "button-primary-gradient-end": "#d00d21",
       "button-primary-disabled": "#8a3a2c",
       "scrollbar-bg": "#4a3129",
